@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fondo lleno (sin bordes redondeados — requerido para maskable) -->
+  <rect width="512" height="512" fill="#293380"/>
+  <!-- Barras del gráfico (zona segura centrada) -->
+  <rect x="110" y="320" width="68" height="110" rx="8" fill="#F58F00" opacity="0.85"/>
+  <rect x="222" y="240" width="68" height="190" rx="8" fill="#ffffff" opacity="0.9"/>
+  <rect x="334" y="278" width="68" height="152" rx="8" fill="#F58F00" opacity="0.6"/>
+  <!-- Línea de tendencia -->
+  <polyline points="144,298 256,208 368,248" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Puntos -->
+  <circle cx="144" cy="298" r="12" fill="#F58F00"/>
+  <circle cx="256" cy="208" r="12" fill="#F58F00"/>
+  <circle cx="368" cy="248" r="12" fill="#F58F00"/>
+  <!-- Texto TyN -->
+  <text x="256" y="162" font-family="system-ui,-apple-system,sans-serif" font-size="82" font-weight="800" fill="#ffffff" text-anchor="middle" letter-spacing="-2">TyN</text>
+</svg>
