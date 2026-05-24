@@ -142,7 +142,7 @@ tbody tr:not(.tot):not(.rh):nth-child(even) td{background:rgba(41,51,128,.025)}
 
 <div class="tab" id="tab-ingresos">
   <div id="ing-tbl"></div>
-  <div class="cc"><h3 id="ing-pie-ttl">Composición — período actual</h3><canvas id="cIngPie" height="220"></canvas></div>
+  <div class="cc"><h3 id="ing-pie-ttl">Composición — período actual</h3><canvas id="cIngPie" height="240"></canvas></div>
   <div class="cc" id="cc-ing-evol"><h3>Evolución por concepto</h3><canvas id="cIngEvol" height="200"></canvas></div>
   <div class="cc" id="cc-ing-line"><h3>Tendencia — Total Ingresos</h3><canvas id="cIngLine" height="180"></canvas></div>
 </div>
@@ -550,6 +550,76 @@ function drawLine(id,labels,datasets,h=180,isPct=false){
   }
 }
 
+// ── Radial progress bars (concentric arcs) ─────────────────────────
+function drawRadialBars(id,labels,values,colors,borders,h=240){
+  const{ctx,w}=prepCanvas(id,h);
+  const total=values.reduce((a,b)=>a+b,0);if(!total)return;
+  const n=values.length;
+  const arcW=Math.round(w*0.44);
+  const cx=arcW/2,cy=h/2;
+  const maxR=Math.min(cx-6,cy-8);
+  const ringW=n<=3?12:n<=4?10:n<=5?8:6;
+  const spacing=4;
+  for(let i=0;i<n;i++){
+    const r=maxR-i*(ringW+spacing);
+    if(r<8)break;
+    const pct=values[i]/total;
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.strokeStyle='rgba(200,205,230,0.38)';ctx.lineWidth=ringW;ctx.lineCap='butt';ctx.stroke();
+    if(pct>0){
+      ctx.beginPath();ctx.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+pct*Math.PI*2);
+      ctx.strokeStyle=borders[i%borders.length];ctx.lineWidth=ringW;ctx.lineCap='round';ctx.stroke();
+      ctx.lineCap='butt';
+    }
+  }
+  ctx.fillStyle='#bbb';ctx.textAlign='center';ctx.font=`8px 'Segoe UI',sans-serif`;ctx.fillText('TOTAL',cx,cy-9);
+  ctx.fillStyle=AZ;ctx.font=`bold 12px 'Segoe UI',sans-serif`;ctx.fillText(fmAxis(total),cx,cy+5);
+  const lxS=arcW+14;
+  const itemH=Math.min(38,(h-12)/n);
+  const ly0=(h-itemH*n)/2;
+  labels.forEach((l,i)=>{
+    const ly=ly0+i*itemH;
+    const pct=values[i]/total;
+    ctx.fillStyle=borders[i%borders.length];ctx.fillRect(lxS,ly+itemH/2-5,3,10);
+    ctx.fillStyle='#333';ctx.textAlign='left';ctx.font=`10px 'Segoe UI',sans-serif`;
+    const sl=l.length>13?l.substring(0,13)+'…':l;
+    ctx.fillText(sl,lxS+8,ly+itemH/2-2);
+    ctx.fillStyle='#888';ctx.font=`9px 'Segoe UI',sans-serif`;
+    ctx.fillText(`${fmAxis(values[i])} · ${(pct*100).toFixed(1)}%`,lxS+8,ly+itemH/2+11);
+  });
+}
+
+// ── Lollipop chart ─────────────────────────────────────────────────
+function drawLollipop(id,labels,values,colors,borders,h=220){
+  const{ctx,w}=prepCanvas(id,h);
+  const PAD={t:8,r:60,b:8,l:130};
+  const cw=w-PAD.l-PAD.r,ch=h-PAD.t-PAD.b;
+  const maxV=niceMax(Math.max(...values,1));
+  const n=labels.length,step=ch/n,dotR=5;
+  labels.forEach((l,i)=>{
+    const lw=Math.max(2,values[i]/maxV*cw);
+    const y=PAD.t+i*step+step/2;
+    const col=borders[i%borders.length];
+    // track
+    ctx.strokeStyle='rgba(200,205,230,0.45)';ctx.lineWidth=1.5;ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(PAD.l+cw,y);ctx.stroke();
+    // line
+    ctx.strokeStyle=col;ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(PAD.l+lw-dotR,y);ctx.stroke();
+    // dot
+    ctx.beginPath();ctx.arc(PAD.l+lw,y,dotR,0,Math.PI*2);
+    ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+    // label
+    ctx.fillStyle='#555';ctx.textAlign='right';ctx.font=`10px 'Segoe UI',sans-serif`;
+    const words=l.split(' ');
+    if(words.length>1){ctx.fillText(words[0],PAD.l-6,y-4);ctx.fillText(words.slice(1).join(' '),PAD.l-6,y+7);}
+    else ctx.fillText(l,PAD.l-6,y+4);
+    // value
+    ctx.fillStyle=col;ctx.textAlign='left';ctx.font=`bold 10px 'Segoe UI',sans-serif`;
+    ctx.fillText(fmAxis(values[i]),PAD.l+lw+dotR+5,y+4);
+  });
+}
+
 // ── Doughnut chart ─────────────────────────────────────────────────
 function drawDoughnut(id,labels,values,colors,borders,h=220){
   const{ctx,w}=prepCanvas(id,h);
@@ -623,7 +693,7 @@ function rendIng(){
 
   document.getElementById('ing-pie-ttl').textContent=`Composición — ${cur.label}`;
   const vi=IK.map((k,i)=>({k,i,v:cur.ing[k]||0})).filter(x=>x.v>0);
-  setTimeout(()=>drawDoughnut('cIngPie',vi.map(x=>IL[x.k]),vi.map(x=>x.v),vi.map(x=>PAL_A[x.i%7]),vi.map(x=>PAL_B[x.i%7]),220),10);
+  setTimeout(()=>drawRadialBars('cIngPie',vi.map(x=>IL[x.k]),vi.map(x=>x.v),vi.map(x=>PAL_A[x.i%7]),vi.map(x=>PAL_B[x.i%7]),240),10);
 
   const ew=document.getElementById('cc-ing-evol'),lw=document.getElementById('cc-ing-line');
   if(sel.length>1){
@@ -658,7 +728,7 @@ function rendGas(){
   document.getElementById('gas-nota').innerHTML=tech?`<div class="nota"><strong>💻 Tech (excl. sostenibilidad):</strong> Desarrollo: ${fm(g.d||0,true)} · Soporte: ${fm(g.st||0,true)} · Nube: ${fm(g.n||0,true)}<br><strong>Total Tech: ${fm(tech,true)} · Base ajustada: ${fm(cc.tGaj,true)} → Sos: ${fp(cc.sos)}</strong></div>`:'';
 
   const lbl=RUBROS.map(r=>r.l.replace(' y Reparaciones','').replace(' Consumo Interno',''));
-  setTimeout(()=>drawBarH('cGasBar',lbl,RUBROS.map(r=>gv(r)),PAL_A,PAL_B,220),10);
+  setTimeout(()=>drawLollipop('cGasBar',lbl,RUBROS.map(r=>gv(r)),PAL_A,PAL_B,220),10);
 
   const ew=document.getElementById('cc-gas-evol'),cw=document.getElementById('cc-cob');
   if(sel.length>1){
