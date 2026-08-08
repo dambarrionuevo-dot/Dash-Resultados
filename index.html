@@ -349,16 +349,13 @@ function renderEjPills(){
 }
 function setEjActivo(key){
   if(key===ejActivo)return;
-  ejActivo=key;renderEjPills();
-  if(pselOpen)renderPselList();
+  ejActivo=key;
+  const ms=months.filter(m=>getEj(m.id).key===key);
+  selIds=ms.length?[ms[ms.length-1].id]:[];
+  renderEjPills();renderChips();renderActive();
 }
 function renderChips(){
-  const selMonths=selIds.map(id=>months.find(x=>x.id===id)).filter(Boolean);
-  const multi=new Set(selMonths.map(m=>getEj(m.id).key)).size>1;
-  const tags=selMonths.map(m=>{
-    const e=getEj(m.id),suf=multi?` <small style="font-size:.62em;opacity:.85;font-weight:600">${e.ini}/${String(e.ini+1).slice(2)}</small>`:'';
-    return`<span class="psel-tag">${m.label}${suf}</span>`;
-  }).join('');
+  const tags=selIds.map(id=>{const m=months.find(x=>x.id===id);return m?`<span class="psel-tag">${m.label}</span>`:''}).join('');
   document.getElementById('psel-tags').innerHTML=tags||'<span class="psel-ph">Seleccionar período...</span>';
   if(pselOpen)renderPselList();
   const pair=getCompPair(),ab=document.getElementById('auto-bar');
