@@ -30,6 +30,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
 .pck-lbl{flex:1;font-size:.85rem;font-weight:600}
 .pck-auto{font-size:.65rem;color:var(--st);font-weight:400;margin-left:4px}
 .psel-close{display:block;width:100%;padding:9px;border:none;border-top:1px solid var(--bd);background:#FAFAFA;font-size:.8rem;font-weight:700;color:var(--az);cursor:pointer;font-family:inherit;text-align:center}
+.ej-pills{display:flex;gap:6px;padding:8px 14px 0;overflow-x:auto;background:#fff}
+.ej-pill{flex-shrink:0;padding:4px 13px;border-radius:50px;font-size:.68rem;font-weight:700;white-space:nowrap;cursor:pointer;border:1.5px solid var(--bd);color:var(--st);background:#fff}
+.ej-pill.active{background:linear-gradient(135deg,#3d4dbb,var(--az));color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(41,51,128,.35)}
+.ej-pill.single{cursor:default}
 .auto-bar{background:#e8ecf8;padding:6px 14px;font-size:.72rem;color:var(--az);border-bottom:2px solid #c5cde8;display:none;font-weight:600}
 .tab{display:none;padding:14px}.tab.on{display:block}
 .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:640px;background:rgba(232,236,250,.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid rgba(190,200,235,.55);display:grid;grid-template-columns:repeat(4,1fr);z-index:100;box-shadow:0 -4px 24px rgba(41,51,128,.13);padding:6px 5px 0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
@@ -119,6 +123,7 @@ tbody tr:not(.tot):not(.rh):nth-child(even) td{background:rgba(41,51,128,.025)}
 <div class="sticky-shell">
 <div class="hdr"><h1>Tecnología y Negocios</h1><div class="sub" id="hdr-sub">Dashboard de Resultados</div></div>
 <div class="psel-wrap">
+  <div class="ej-pills" id="ej-pills"></div>
   <div class="psel-bar" onclick="togPsel()">
     <span style="flex-shrink:0;display:flex;align-items:center;color:var(--az)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="8" cy="15" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="1" fill="currentColor" stroke="none"/><circle cx="16" cy="15" r="1" fill="currentColor" stroke="none"/></svg></span>
     <div id="psel-tags"><span class="psel-ph">Seleccionar período...</span></div>
@@ -246,13 +251,17 @@ const PAL_A=['rgba(41,51,128,.55)','rgba(245,143,0,.55)','rgba(92,107,192,.55)',
 const MLbl=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const MES={enero:'01',febrero:'02',marzo:'03',abril:'04',mayo:'05',junio:'06',julio:'07',agosto:'08',septiembre:'09',octubre:'10',noviembre:'11',diciembre:'12',ene:'01',feb:'02',mar:'03',abr:'04',may:'05',jun:'06',jul:'07',ago:'08',sep:'09',oct:'10',nov:'11',dic:'12'};
 
+function getEj(id){const[y,m]=id.split('-').map(Number);const ini=m>=7?y:y-1;return{ini,key:`${ini}/${ini+1}`,label:`Ejercicio ${ini}/${String(ini+1).slice(2)}`}}
+function getEjList(){const map=new Map();months.forEach(m=>{const e=getEj(m.id);if(!map.has(e.key))map.set(e.key,e)});return[...map.values()].sort((a,b)=>b.ini-a.ini)}
+
 // ── DEFAULT DATA ──────────────────────────────────────────────────
 const DEF=[
   {id:'2026-02',label:'Feb 2026',ing:{a:8069752,c:10995831,f:725000,v:3295081,s:544629,o:0},gas:{p:41013070,m:0,st:0,d:14401345,n:0,og:3263310,co:12500,ma:404958,i:1177193,au:0,oi:70229,e:598604,am:1707496}},
   {id:'2026-03',label:'Mar 2026',ing:{a:14204035,c:18070505,f:710000,v:3295004,s:402689,o:0},gas:{p:44682804,m:1057225,st:2168000,d:22808000,n:4072701,og:1042078,co:551355,ma:604736,i:1824802,au:5386414,oi:136810,e:1101,am:1707496}},
   {id:'2026-04',label:'Abr 2026',ing:{a:12335161,c:23440856,f:702500,v:5543124,s:750403,o:0},gas:{p:44448100,m:3928317,st:0,d:0,n:3039661,og:913524,co:0,ma:129685,i:0,au:0,oi:0,e:260226,am:0}},
   {id:'2026-05',label:'May 2026',ing:{a:17191396,c:33161158,f:707500,v:6610004,s:1520403,o:0},gas:{p:48904382,m:1963219,st:0,d:199233,n:0,og:1761563,co:465044,ma:799154,i:74448,au:0,oi:0,e:539,am:0}},
-  {id:'2026-06',label:'Jun 2026',ing:{a:10941145,c:23499621,f:730000,v:9378099,s:1099351,o:0},gas:{p:48639879,m:2506574,st:0,d:0,n:3115452,og:1689683,co:87265,ma:1190199,i:0,au:0,oi:0,e:59002,am:0}}
+  {id:'2026-06',label:'Jun 2026',ing:{a:10941145,c:23499621,f:730000,v:9378099,s:1099351,o:0},gas:{p:48639879,m:2506574,st:0,d:0,n:3115452,og:1689683,co:87265,ma:1190199,i:0,au:0,oi:0,e:59002,am:0}},
+  {id:'2026-07',label:'Jul 2026',ing:{a:19438452,c:31566622,f:747500,v:7404654,s:1156878,o:0},gas:{p:50439790,m:1449493,st:0,d:0,n:0,og:189454,co:428012,ma:0,i:0,au:0,oi:0,e:0,am:0}}
 ];
 
 const RUBROS=[
@@ -268,7 +277,7 @@ const RUBROS=[
 ];
 
 // ── STATE ─────────────────────────────────────────────────────────
-let months=[],selIds=[],pselOpen=false,pendingImport=null;
+let months=[],selIds=[],pselOpen=false,pendingImport=null,ejActivo=null;
 
 // ── CALC ──────────────────────────────────────────────────────────
 function calc(m){
@@ -307,6 +316,7 @@ function loadData(){
   if(!months.length)months=[...DEF];
   months.sort((a,b)=>a.id.localeCompare(b.id));
   saveData();
+  ejActivo=months.length?getEj(months[months.length-1].id).key:null;
   selIds=[months[months.length-1].id];
 }
 function saveData(){try{localStorage.setItem(SK,JSON.stringify(months))}catch(e){}}
@@ -331,8 +341,24 @@ function togPsel(){
   if(pselOpen)renderPselList();
 }
 function closePsel(){pselOpen=false;document.getElementById('psel-panel').classList.remove('show');document.getElementById('psel-arr').classList.remove('open')}
+function renderEjPills(){
+  const ejs=getEjList(),wrap=document.getElementById('ej-pills');
+  if(!ejs.length){wrap.innerHTML='';return}
+  const single=ejs.length===1;
+  wrap.innerHTML=ejs.map(e=>`<span class="ej-pill${e.key===ejActivo?' active':''}${single?' single':''}"${single?'':` onclick="setEjActivo('${e.key}')"`}>${e.label}</span>`).join('');
+}
+function setEjActivo(key){
+  if(key===ejActivo)return;
+  ejActivo=key;renderEjPills();
+  if(pselOpen)renderPselList();
+}
 function renderChips(){
-  const tags=selIds.map(id=>{const m=months.find(x=>x.id===id);return m?`<span class="psel-tag">${m.label}</span>`:''}).join('');
+  const selMonths=selIds.map(id=>months.find(x=>x.id===id)).filter(Boolean);
+  const multi=new Set(selMonths.map(m=>getEj(m.id).key)).size>1;
+  const tags=selMonths.map(m=>{
+    const e=getEj(m.id),suf=multi?` <small style="font-size:.62em;opacity:.85;font-weight:600">${e.ini}/${String(e.ini+1).slice(2)}</small>`:'';
+    return`<span class="psel-tag">${m.label}${suf}</span>`;
+  }).join('');
   document.getElementById('psel-tags').innerHTML=tags||'<span class="psel-ph">Seleccionar período...</span>';
   if(pselOpen)renderPselList();
   const pair=getCompPair(),ab=document.getElementById('auto-bar');
@@ -343,8 +369,9 @@ function renderChips(){
 function renderPselList(){
   const pair=getCompPair();
   const autoId=selIds.length===1&&pair.length===2?pair[0].id:null;
-  document.getElementById('psel-list').innerHTML=months.length
-    ?months.map(m=>{
+  const list=months.filter(m=>getEj(m.id).key===ejActivo);
+  document.getElementById('psel-list').innerHTML=list.length
+    ?list.map(m=>{
       const c=calc(m),bCls=c.cob>=80?'badge-v':c.cob>=50?'badge-n':'badge-r';
       return`<label class="pck-item">
         <input type="checkbox" ${selIds.includes(m.id)?'checked':''} onchange="togChip('${m.id}')">
@@ -352,7 +379,7 @@ function renderPselList(){
         <span class="badge ${bCls}">${fp(c.cob)}</span>
       </label>`;
     }).join('')
-    :'<div style="padding:14px;font-size:.82rem;color:var(--st)">Sin períodos cargados.</div>';
+    :`<div style="padding:14px;font-size:.82rem;color:var(--st)">${months.length?'Sin períodos en este ejercicio.':'Sin períodos cargados.'}</div>`;
 }
 function togChip(id){
   if(selIds.includes(id)){if(selIds.length>1)selIds=selIds.filter(x=>x!==id)}
@@ -679,7 +706,7 @@ function rendRes(){
   const pair=getCompPair();if(!pair.length)return;
   const cur=pair[pair.length-1],prv=pair.length>1?pair[0]:null;
   const cc=calc(cur),cp=prv?calc(prv):null;
-  document.getElementById('hdr-sub').textContent=cur.label+(prv?` · vs ${prv.label}`:'');
+  document.getElementById('hdr-sub').textContent=`${cur.label} · ${getEj(cur.id).label}`+(prv?` · vs ${prv.label}`:'');
   document.getElementById('kpi-grid').innerHTML=`
     <div class="kpi v"><div class="kl">Total Ingresos</div><div class="kv">${fm(cc.tI)}</div><div class="kd">${cp?dt(cc.tI,cp.tI):''}${cp?` vs ${fm(cp.tI)}`:''}</div></div>
     <div class="kpi n"><div class="kl">Total Costos</div><div class="kv">${fm(cc.tG)}</div><div class="kd">${cp?dt(cc.tG,cp.tG,true):''}${cp?` vs ${fm(cp.tG)}`:''}</div></div>
@@ -769,9 +796,13 @@ function rendGas(){
 
 function rendDatos(){
   if(!months.length){document.getElementById('mlist').innerHTML='<div class="empty"><div class="ei">📭</div><p>No hay períodos cargados.</p></div>';return}
-  document.getElementById('mlist').innerHTML=months.map(m=>{
-    const c=calc(m);
-    return`<div class="mi"><div><div class="mi-l">${m.label} <span class="badge ${c.cob>=80?'badge-v':c.cob>=50?'badge-n':'badge-r'}">${fp(c.cob)}</span></div><div class="mi-s">Ing: ${fm(c.tI)} · Cos: ${fm(c.tG)} · Sos: ${fp(c.sos)}</div></div><div><button class="bsm" onclick="editMon('${m.id}')">✏️</button><button class="bsm" style="border-color:var(--ro);color:var(--ro)" onclick="delMon('${m.id}')">🗑️</button></div></div>`;
+  document.getElementById('mlist').innerHTML=getEjList().map(e=>{
+    const ms=months.filter(m=>getEj(m.id).key===e.key),open=e.key===ejActivo;
+    const items=ms.map(m=>{
+      const c=calc(m);
+      return`<div class="mi"><div><div class="mi-l">${m.label} <span class="badge ${c.cob>=80?'badge-v':c.cob>=50?'badge-n':'badge-r'}">${fp(c.cob)}</span></div><div class="mi-s">Ing: ${fm(c.tI)} · Cos: ${fm(c.tG)} · Sos: ${fp(c.sos)}</div></div><div><button class="bsm" onclick="editMon('${m.id}')">✏️</button><button class="bsm" style="border-color:var(--ro);color:var(--ro)" onclick="delMon('${m.id}')">🗑️</button></div></div>`;
+    }).join('');
+    return`<div class="ctitle ctrig${open?' open':''}" onclick="togColl(this,'eg-${e.ini}')"><span>${e.label} · ${ms.length} mes${ms.length===1?'':'es'}</span><span class="carr">▼</span></div><div class="coll${open?' open':''}" id="eg-${e.ini}">${items}</div>`;
   }).join('');
 }
 
@@ -800,13 +831,25 @@ function openForm(){
     if(nx.id){document.getElementById('fp').value=nx.id;document.getElementById('fl').value=nx.label;document.getElementById('ftit').textContent=`➕ Nuevo: ${nx.label}`}
   }
 }
+function syncEjOnUpsert(prevTopId){
+  if(!months.length){ejActivo=null;return}
+  const topId=months[months.length-1].id;
+  if(topId!==prevTopId)ejActivo=getEj(topId).key;
+}
+function syncEjOnDelete(){
+  const ejs=getEjList();
+  if(!ejs.length){ejActivo=null;return}
+  if(!ejs.some(e=>e.key===ejActivo))ejActivo=ejs[0].key;
+}
 function saveMon(){
   const id=document.getElementById('fp').value,lbl=(document.getElementById('fl').value||'').trim();
   if(!id||!lbl){alert('Completá período y etiqueta.');return}
   const m={id,label:lbl,ing:Object.fromEntries(IKF.map((k,i)=>[k,nv(FI[i])])),gas:Object.fromEntries(GKF.map((k,i)=>[k,nv(FG[i])]))};
+  const prevTop=months.length?months[months.length-1].id:null;
   const idx=months.findIndex(x=>x.id===id);
   if(idx>=0)months[idx]=m;else{months.push(m);months.sort((a,b)=>a.id.localeCompare(b.id))}
-  saveData();selIds=[id];cancelEdit();renderChips();rendDatos();
+  syncEjOnUpsert(prevTop);
+  saveData();selIds=[id];cancelEdit();renderEjPills();renderChips();rendDatos();
 }
 function editMon(id){
   const m=months.find(x=>x.id===id);if(!m)return;
@@ -826,15 +869,18 @@ function cancelEdit(){
 function delMon(id){
   months=months.filter(m=>m.id!==id);selIds=selIds.filter(x=>x!==id);
   if(!selIds.length&&months.length)selIds=[months[months.length-1].id];
-  saveData();renderChips();rendDatos();
+  syncEjOnDelete();
+  saveData();renderEjPills();renderChips();rendDatos();
 }
 function importJSON(){
   const raw=(document.getElementById('imp-json').value||'').trim();if(!raw){alert('Pegá el JSON.');return}
   try{
     let data=JSON.parse(raw);if(!Array.isArray(data))data=[data];
+    const prevTop=months.length?months[months.length-1].id:null;
     data.forEach(m=>{if(m.id&&m.label){const i=months.findIndex(x=>x.id===m.id);if(i>=0)months[i]=m;else months.push(m)}});
     months.sort((a,b)=>a.id.localeCompare(b.id));saveData();
-    document.getElementById('imp-json').value='';renderChips();rendDatos();alert('✅ Importado.');
+    syncEjOnUpsert(prevTop);
+    document.getElementById('imp-json').value='';renderEjPills();renderChips();rendDatos();alert('✅ Importado.');
   }catch(e){alert('Error en JSON: '+e.message)}
 }
 function exportJSON(){
@@ -968,11 +1014,13 @@ function confirmImport(){
   if(!pendingImport||!pendingImport.length)return;
   const m=pendingImport[0];
   if(!m.id){alert('No se detectó el período principal.');return}
+  const prevTop=months.length?months[months.length-1].id:null;
   const idx=months.findIndex(x=>x.id===m.id);
   if(idx>=0)months[idx]=m;
   else{months.push(m);months.sort((a,b)=>a.id.localeCompare(b.id))}
+  syncEjOnUpsert(prevTop);
   selIds=[m.id];
-  saveData();cancelImport();renderChips();rendDatos();
+  saveData();cancelImport();renderEjPills();renderChips();rendDatos();
   alert(`✅ ${m.label} guardado correctamente.`);
 }
 function cancelImport(){
@@ -1003,7 +1051,7 @@ xlsxScript.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min
 xlsxScript.async=true;document.head.appendChild(xlsxScript);
 
 // ── INIT ──────────────────────────────────────────────────────────
-loadData();renderChips();rendRes();
+loadData();renderEjPills();renderChips();rendRes();
 </script>
 </body>
 </html>
