@@ -157,7 +157,7 @@ tbody tr:not(.tot):not(.rh):nth-child(even) td{background:rgba(41,51,128,.025)}
 <div class="tab" id="tab-gastos">
   <div id="gas-tbl"></div>
   <div id="gas-nota"></div>
-  <div class="cc"><h3>Personal vs. Otros Costos</h3><div style="display:flex;align-items:center;gap:12px"><div style="flex:0 0 42%"><canvas id="cGasPers" height="150"></canvas></div><div id="gas-insights" style="flex:1;display:flex;flex-direction:column;gap:9px"></div></div></div>
+  <div class="cc"><h3>Rubros Relevantes</h3><div style="display:flex;align-items:center;gap:12px"><div style="flex:0 0 48%"><canvas id="cGasPers" height="175"></canvas></div><div id="gas-insights" style="flex:1;display:flex;flex-direction:column;gap:9px"></div></div></div>
   <div class="cc" id="cc-gas-evol"><h3>Evolución rubros principales</h3><canvas id="cGasEvol" height="200"></canvas></div>
   <div class="cc" id="cc-cob"><h3>Cobertura y Sostenibilidad</h3><canvas id="cCobSos" height="180"></canvas></div>
 </div>
@@ -784,14 +784,11 @@ function rendGas(){
   const g=cur.gas,tech=(g.st||0)+(g.d||0)+(g.n||0);
   document.getElementById('gas-nota').innerHTML=tech?`<div class="nota"><strong>💻 Tech (excl. sostenibilidad):</strong> Desarrollo: ${fm(g.d||0,true)} · Soporte: ${fm(g.st||0,true)} · Nube: ${fm(g.n||0,true)}<br><strong>Total Tech: ${fm(tech,true)} · Base ajustada: ${fm(cc.tGaj,true)} → Sos: ${fp(cc.sos)}</strong></div>`:'';
 
-  const personal=RUBROS[0].fn(g),otros=Math.max(0,cc.tG-personal);
-  setTimeout(()=>drawDoughnut('cGasPers',[],[personal,otros],[PAL_A[0],PAL_A[1]],[PAL_B[0],PAL_B[1]],150),10);
-  const pctP=cc.tG>0?personal/cc.tG*100:0,pctO=cc.tG>0?otros/cc.tG*100:0;
-  const top2=RUBROS.slice(1).map(r=>({l:r.l,v:r.fn(cur.gas)})).sort((a,b)=>b.v-a.v)[0];
-  let ih=`<div style="display:flex;align-items:center;gap:7px"><span style="width:10px;height:10px;border-radius:3px;background:${PAL_B[0]};flex-shrink:0"></span><span style="font-size:.74rem"><strong>Personal</strong> ${fm(personal,true)} · ${pctP.toFixed(1)}%</span></div>`;
-  ih+=`<div style="display:flex;align-items:center;gap:7px"><span style="width:10px;height:10px;border-radius:3px;background:${PAL_B[1]};flex-shrink:0"></span><span style="font-size:.74rem"><strong>Otros rubros</strong> ${fm(otros,true)} · ${pctO.toFixed(1)}%</span></div>`;
+  const slices=RUBROS.map(r=>({l:r.l,v:r.fn(g)})).filter(s=>s.v>0).sort((a,b)=>b.v-a.v);
+  const dCol=slices.map((_,i)=>PAL_A[i%PAL_A.length]),dBor=slices.map((_,i)=>PAL_B[i%PAL_B.length]);
+  setTimeout(()=>drawDoughnut('cGasPers',[],slices.map(s=>s.v),dCol,dBor,175),10);
+  let ih=slices.map((s,i)=>{const pct=cc.tG>0?s.v/cc.tG*100:0;return`<div style="display:flex;align-items:center;gap:7px"><span style="width:10px;height:10px;border-radius:3px;background:${dBor[i]};flex-shrink:0"></span><span style="font-size:.74rem"><strong>${s.l}</strong> ${fm(s.v,true)} · ${pct.toFixed(1)}%</span></div>`}).join('');
   if(prv)ih+=`<div style="font-size:.71rem;color:var(--st);padding-top:6px;border-top:1px solid var(--bd)">Costos totales: <strong style="color:${cc.tG>=cp.tG?'var(--ro)':'var(--ve)'}">${dt(cc.tG,cp.tG,true)}</strong> vs ${prv.label}</div>`;
-  if(top2&&top2.v>0)ih+=`<div style="font-size:.71rem;color:var(--st)">Mayor rubro (excl. Personal): <strong style="color:var(--tx)">${top2.l}</strong> · ${fm(top2.v,true)}</div>`;
   document.getElementById('gas-insights').innerHTML=ih;
 
   const ew=document.getElementById('cc-gas-evol'),cw=document.getElementById('cc-cob');
