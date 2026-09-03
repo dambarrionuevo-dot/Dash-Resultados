@@ -179,7 +179,7 @@ tbody tr:not(.tot):not(.rh):nth-child(even) td{background:var(--chip-bg)}
 <div class="tab" id="tab-gastos">
   <div id="gas-tbl"></div>
   <div id="gas-nota"></div>
-  <div class="cc"><h3>Rubros Relevantes</h3><div style="display:flex;align-items:center;gap:20px"><div id="gas-donut"></div><div style="flex:1;min-width:0"><div style="font-size:.68rem;color:var(--text-tertiary)">Total del mes</div><div id="gas-donut-tot" style="font-size:1.15rem;font-weight:700;color:var(--text-primary);margin-top:2px"></div></div></div><div id="gas-insights" style="margin-top:16px;display:flex;flex-direction:column;gap:9px"></div></div>
+  <div class="cc"><h3>Rubros Relevantes</h3><div style="display:flex;align-items:flex-start;gap:8px"><div id="gas-donut"></div><div style="flex:1;min-width:0;padding-top:6px"><div style="font-size:.6rem;color:var(--text-tertiary)">Total del mes</div><div id="gas-donut-tot" style="font-size:.88rem;font-weight:700;color:var(--text-primary);margin-top:1px"></div><div id="gas-insights" style="margin-top:9px;display:flex;flex-direction:column;gap:6px"></div></div></div></div>
   <div class="cc" id="cc-gas-evol"><h3>Evolución rubros principales</h3><canvas id="cGasEvol" height="200"></canvas></div>
   <div class="cc" id="cc-cob"><h3>Cobertura y Sostenibilidad</h3><canvas id="cCobSos" height="180"></canvas></div>
 </div>
@@ -280,7 +280,6 @@ function applyTheme(mode){
   const v=n=>cs.getPropertyValue(n).trim();
   AZ=v('--az')||AZ;NA=v('--na')||NA;VE=v('--ve')||VE;RO=v('--ro')||RO;
   TXT=v('--text-primary')||TXT;TXTM=v('--text-secondary')||TXTM;
-  TRK=v('--track-bg')||TRK;
   PAL_B=[AZ,NA,'#5C6BC0','#E65100','#00796B','#7B1FA2','#FFC107'];
   PAL_A=PAL_B.map((c,i)=>i<2?hexToRgba(c,.55):PAL_A[i]);
   const btn=document.getElementById('theme-btn');
@@ -306,7 +305,8 @@ const DEF=[
   {id:'2026-04',label:'Abr 2026',ing:{a:12335161,c:23440856,f:702500,v:5543124,s:750403,o:0},gas:{psu:29607730,pas:1140500,pag:3562941,pap:7855686,pva:567069,pvi:344000,pse:1188110,pbe:182064,po:0,m:3928317,st:0,d:0,n:3039661,og:913524,coi:0,coa:0,coo:0,mau:47454,mac:0,mao:82231,i:0,au:0,oi:0,eav:0,eca:0,eo:260226,aro:0,aeq:0,amo:0}},
   {id:'2026-05',label:'May 2026',ing:{a:17191396,c:33161158,f:707500,v:6610004,s:1520403,o:0},gas:{psu:32574495,pas:0,pag:5170850,pap:8596435,pva:722653,pvi:344000,pse:1306536,pbe:189413,po:0,m:1963219,st:0,d:199233,n:0,og:1761563,coi:0,coa:465044,coo:0,mau:0,mac:799154,mao:0,i:74448,au:0,oi:0,eav:0,eca:0,eo:539,aro:0,aeq:0,amo:0}},
   {id:'2026-06',label:'Jun 2026',ing:{a:10941145,c:23499621,f:730000,v:9378099,s:1099351,o:0},gas:{psu:32574495,pas:1132000,pag:3885028,pap:8598458,pva:603367,pvi:344000,pse:1307201,pbe:195330,po:0,m:2506574,st:0,d:0,n:3115452,og:1689683,coi:8265,coa:79000,coo:0,mau:217705,mac:972494,mao:0,i:0,au:0,oi:0,eav:14002,eca:45000,eo:0,aro:0,aeq:0,amo:0}},
-  {id:'2026-07',label:'Jul 2026',ing:{a:19438452,c:31566622,f:747500,v:7404654,s:1156878,o:0},gas:{psu:33939979,pas:1124000,pag:3685220,pap:8945643,pva:748670,pvi:430000,pse:1364157,pbe:202121,po:0,m:1449493,st:0,d:0,n:0,og:189454,coi:0,coa:428012,coo:0,mau:0,mac:0,mao:0,i:0,au:0,oi:0,eav:0,eca:0,eo:0,aro:0,aeq:0,amo:0}}
+  {id:'2026-07',label:'Jul 2026',ing:{a:19438452,c:31566622,f:747500,v:7404654,s:1156878,o:0},gas:{psu:33939979,pas:1124000,pag:3685220,pap:8945643,pva:748670,pvi:430000,pse:1364157,pbe:202121,po:0,m:1449493,st:0,d:0,n:0,og:189454,coi:0,coa:428012,coo:0,mau:0,mac:0,mao:0,i:0,au:0,oi:0,eav:0,eca:0,eo:0,aro:0,aeq:0,amo:0}},
+  {id:'2026-08',label:'Ago 2026',ing:{a:13233794,c:29977400,f:755000,v:10480411,s:1505065,o:0},gas:{psu:34065327,pas:964500,pag:3700430,pap:8951363,pva:636293,pvi:430000,pse:1369658,pbe:205961,po:160000,m:601391,st:0,d:0,n:0,og:1621030,coi:0,coa:606926,coo:0,mau:158442,mac:61642,mao:0,i:0,au:0,oi:233964,eav:0,eca:0,eo:600,aro:0,aeq:0,amo:0}}
 ];
 
 const RUBROS=[
@@ -702,20 +702,41 @@ function drawLollipop(id,labels,values,colors,borders,h=220){
 }
 
 // ── Doughnut SVG (inline, theme-aware) ──────────────────────────────
-function svgDonut(segments,size=108){
+function shade(hex,amt){
+  const n=parseInt(hex.slice(1),16);
+  const c=(v)=>Math.min(255,Math.max(0,v+amt));
+  return`rgb(${c((n>>16)&255)},${c((n>>8)&255)},${c(n&255)})`;
+}
+function svgDonut(segments,size=188){
   const total=segments.reduce((a,b)=>a+b.v,0);
-  const C=2*Math.PI*45;
-  let cum=0;
-  const circles=segments.map(s=>{
-    const len=total>0?s.v/total*C:0;
-    const dash=`${len.toFixed(2)} ${(C-len).toFixed(2)}`,off=(-cum).toFixed(2);
-    cum+=len;
-    return`<circle cx="55" cy="55" r="45" fill="none" stroke="${s.color}" stroke-width="14" stroke-dasharray="${dash}" stroke-dashoffset="${off}" transform="rotate(-90 55 55)"/>`;
-  }).join('');
-  return`<svg width="${size}" height="${size}" viewBox="0 0 110 110" style="flex-shrink:0"><circle cx="55" cy="55" r="45" fill="none" stroke="var(--track-bg)" stroke-width="14"/>${circles}</svg>`;
+  if(!total)return'';
+  const cx=size/2,cy=size*0.44,R=size*0.32,ry=R*0.56,depth=R*0.42,explode=R*0.09;
+  const toRad=d=>d*Math.PI/180;
+  const pt=(deg,rx,ryy,ox,oy)=>{const r=toRad(deg);return{x:ox+rx*Math.cos(r),y:oy+ryy*Math.sin(r)}};
+  let cum=-90,walls='',tops='',defs='';
+  segments.forEach((s,i)=>{
+    const pct=s.v/total,sweep=pct*360,a0=cum,a1=cum+sweep;cum=a1;
+    const mid=toRad((a0+a1)/2);
+    const ex=explode*Math.cos(mid),ey=explode*Math.sin(mid)*(ry/R);
+    const lcx=cx+ex,lcy=cy+ey;
+    const p0=pt(a0,R,ry,lcx,lcy),p1=pt(a1,R,ry,lcx,lcy);
+    const largeArc=sweep>180?1:0;
+    defs+=`<linearGradient id="pg${i}" x1="20%" y1="0%" x2="80%" y2="100%"><stop offset="0%" stop-color="${shade(s.color,50)}"/><stop offset="55%" stop-color="${s.color}"/><stop offset="100%" stop-color="${shade(s.color,-18)}"/></linearGradient>`;
+    tops+=`<path d="M${lcx.toFixed(2)},${lcy.toFixed(2)} L${p0.x.toFixed(2)},${p0.y.toFixed(2)} A${R.toFixed(2)},${ry.toFixed(2)} 0 ${largeArc} 1 ${p1.x.toFixed(2)},${p1.y.toFixed(2)} Z" fill="url(#pg${i})" stroke="rgba(255,255,255,.55)" stroke-width=".6"/>`;
+    const wa0=Math.max(a0,0),wa1=Math.min(a1,180);
+    if(wa1>wa0){
+      const wp0=pt(wa0,R,ry,lcx,lcy),wp1=pt(wa1,R,ry,lcx,lcy);
+      const wp0d={x:wp0.x,y:wp0.y+depth},wp1d={x:wp1.x,y:wp1.y+depth};
+      const wLarge=(wa1-wa0)>180?1:0;
+      defs+=`<linearGradient id="wg${i}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="${shade(s.color,-8)}"/><stop offset="100%" stop-color="${shade(s.color,-48)}"/></linearGradient>`;
+      walls+=`<path d="M${wp0.x.toFixed(2)},${wp0.y.toFixed(2)} A${R.toFixed(2)},${ry.toFixed(2)} 0 ${wLarge} 1 ${wp1.x.toFixed(2)},${wp1.y.toFixed(2)} L${wp1d.x.toFixed(2)},${wp1d.y.toFixed(2)} A${R.toFixed(2)},${ry.toFixed(2)} 0 ${wLarge} 0 ${wp0d.x.toFixed(2)},${wp0d.y.toFixed(2)} Z" fill="url(#wg${i})"/>`;
+    }
+  });
+  const vh=Math.round(size*0.86);
+  return`<svg width="${size}" height="${vh}" viewBox="0 0 ${size} ${vh}" style="flex-shrink:0;filter:drop-shadow(0 8px 10px rgba(20,20,40,.28))"><defs>${defs}</defs>${walls}${tops}</svg>`;
 }
 function legendRows(segments,total){
-  return segments.map(s=>{const pct=total>0?s.v/total*100:0;return`<div style="display:flex;align-items:center;gap:7px"><span style="width:10px;height:10px;border-radius:3px;background:${s.color};flex-shrink:0"></span><span style="font-size:.74rem;color:var(--text-primary)"><strong>${s.l}</strong> ${fm(s.v,true)} · ${pct.toFixed(1)}%</span></div>`}).join('');
+  return segments.map(s=>{const pct=total>0?s.v/total*100:0;return`<div style="display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="display:flex;align-items:center;gap:5px;min-width:0"><span style="width:7px;height:7px;border-radius:2px;background:${s.color};flex-shrink:0"></span><span style="font-size:.62rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.l}</span></span><span style="font-size:.62rem;color:var(--text-secondary);flex-shrink:0;white-space:nowrap"><strong style="color:var(--text-primary)">${fm(s.v,true)}</strong> · ${pct.toFixed(1)}%</span></div>`}).join('');
 }
 
 // ── Doughnut chart (canvas, legacy — sin uso actualmente) ───────────
