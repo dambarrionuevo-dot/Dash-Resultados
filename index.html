@@ -373,7 +373,17 @@ function loadData(){
 function saveData(){try{localStorage.setItem(SK,JSON.stringify(months))}catch(e){}}
 
 // ── PERIOD LOGIC ──────────────────────────────────────────────────
-function getSel(){return months.filter(m=>selIds.includes(m.id)).sort((a,b)=>a.id.localeCompare(b.id))}
+function buildConsolidado(ejKey){
+  const ms=months.filter(m=>getEj(m.id).key===ejKey).sort((a,b)=>a.id.localeCompare(b.id));
+  if(!ms.length)return null;
+  const sum=field=>{const o={};ms.forEach(m=>{for(const k in m[field])o[k]=(o[k]||0)+(m[field][k]||0)});return o};
+  const ej=getEj(ms[0].id);
+  return{id:ejKey+'__cons',label:`Consolidado ${ej.label.replace('Ejercicio ','')}`,isCons:true,ej,ing:sum('ing'),gas:sum('gas')};
+}
+function getSel(){
+  if(selIds[0]==='__CONS__'){const c=buildConsolidado(ejActivo);return c?[c]:[]}
+  return months.filter(m=>selIds.includes(m.id)).sort((a,b)=>a.id.localeCompare(b.id));
+}
 function getCompPair(){
   const sel=getSel();if(!sel.length)return[];
   if(sel.length===1){
@@ -406,7 +416,13 @@ function setEjActivo(key){
   renderEjPills();renderChips();renderActive();
 }
 function renderChips(){
-  const tags=selIds.map(id=>{const m=months.find(x=>x.id===id);return m?`<span class="psel-tag">${m.label}</span>`:''}).join('');
+  let tags;
+  if(selIds[0]==='__CONS__'){
+    const c=buildConsolidado(ejActivo);
+    tags=c?`<span class="psel-tag">${c.label}</span>`:'';
+  }else{
+    tags=selIds.map(id=>{const m=months.find(x=>x.id===id);return m?`<span class="psel-tag">${m.label}</span>`:''}).join('');
+  }
   document.getElementById('psel-tags').innerHTML=tags||'<span class="psel-ph">Seleccionar período...</span>';
   if(pselOpen)renderPselList();
   const pair=getCompPair(),ab=document.getElementById('auto-bar');
@@ -417,20 +433,36 @@ function renderChips(){
 }
 function renderPselList(){
   const pair=getCompPair();
-  const autoId=selIds.length===1&&pair.length===2?pair[0].id:null;
+  const isCons=selIds[0]==='__CONS__';
+  const autoId=!isCons&&selIds.length===1&&pair.length===2?pair[0].id:null;
   const list=months.filter(m=>getEj(m.id).key===ejActivo);
-  document.getElementById('psel-list').innerHTML=list.length
+  const consHtml=list.length?`<label class="pck-item">
+      <input type="checkbox" ${isCons?'checked':''} onchange="toggleCons()">
+      <span class="pck-lbl">Consolidado<span class="pck-auto">(suma del ejercicio)</span></span>
+      <span class="badge badge-v">Σ ${list.length} ${list.length===1?'mes':'meses'}</span>
+    </label>`:'';
+  document.getElementById('psel-list').innerHTML=consHtml+(list.length
     ?list.map(m=>{
       const c=calc(m),bCls=c.cob>=80?'badge-v':c.cob>=50?'badge-n':'badge-r';
       return`<label class="pck-item">
-        <input type="checkbox" ${selIds.includes(m.id)?'checked':''} onchange="togChip('${m.id}')">
+        <input type="checkbox" ${isCons||selIds.includes(m.id)?'checked':''} onchange="togChip('${m.id}')">
         <span class="pck-lbl">${m.label}${autoId===m.id?'<span class="pck-auto">(comparación automática)</span>':''}</span>
         <span class="badge ${bCls}">${fp(c.cob)}</span>
       </label>`;
     }).join('')
-    :`<div style="padding:14px;font-size:.82rem;color:var(--st)">${months.length?'Sin períodos en este ejercicio.':'Sin períodos cargados.'}</div>`;
+    :`<div style="padding:14px;font-size:.82rem;color:var(--st)">${months.length?'Sin períodos en este ejercicio.':'Sin períodos cargados.'}</div>`);
+}
+function toggleCons(){
+  if(selIds[0]==='__CONS__'){
+    const ms=months.filter(m=>getEj(m.id).key===ejActivo);
+    selIds=ms.length?[ms[ms.length-1].id]:[];
+  }else{
+    selIds=['__CONS__'];
+  }
+  renderChips();renderActive();
 }
 function togChip(id){
+  if(selIds[0]==='__CONS__'){selIds=[id];renderChips();renderActive();return}
   if(selIds.includes(id)){if(selIds.length>1)selIds=selIds.filter(x=>x!==id)}
   else{if(selIds.length<6)selIds.push(id);selIds.sort()}
   renderChips();renderActive();
@@ -828,12 +860,12 @@ function rendRes(){
   const cur=pair[pair.length-1],prv=pair.length>1?pair[0]:null;
   const cc=calc(cur),cp=prv?calc(prv):null;
   const cpx=showCompare?cp:null,prvx=showCompare?prv:null;
-  document.getElementById('hdr-sub').textContent=`${cur.label} · ${getEj(cur.id).label}`+(prvx?` · vs ${prvx.label}`:'');
+  document.getElementById('hdr-sub').textContent=`${cur.label} · ${cur.isCons?cur.ej.label:getEj(cur.id).label}`+(prvx?` · vs ${prvx.label}`:'');
 
   const ingRows=IK.map(k=>({l:IL[k],v:cur.ing[k]||0})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v);
   const gasRows=RUBROS.map(r=>({l:r.l,v:r.fn(cur.gas)})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v);
   const idx=months.findIndex(m=>m.id===cur.id);
-  const spark=months.slice(Math.max(0,idx-5),idx+1);
+  const spark=cur.isCons?months.filter(m=>getEj(m.id).key===ejActivo).sort((a,b)=>a.id.localeCompare(b.id)):months.slice(Math.max(0,idx-5),idx+1);
   const sVals=spark.map(m=>{const c=calc(m);return c.tI-c.tG});
   const sMin=Math.min(...sVals,0),sMax=Math.max(...sVals,0),srng=(sMax-sMin)||1;
   const sPts=sVals.map((v,i)=>{const x=sVals.length>1?i/(sVals.length-1)*96:48,y=36-((v-sMin)/srng)*30-2;return`${x.toFixed(1)},${y.toFixed(1)}`}).join(' ');
