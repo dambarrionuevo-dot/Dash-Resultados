@@ -823,8 +823,17 @@ function semaHTML(cob,cobPrv){
 
 let expandedKpi=null,alertsOpen=false,metricsOpen=false;
 function toggleKpi(key){expandedKpi=expandedKpi===key?null:key;rendRes()}
-function toggleAlerts(){alertsOpen=!alertsOpen;rendRes()}
-function toggleMetrics(){metricsOpen=!metricsOpen;rendRes()}
+function toggleAlerts(){alertsOpen=!alertsOpen;rendRes();if(alertsOpen)scrollSectionIntoView('alertas-wrap')}
+function toggleMetrics(){metricsOpen=!metricsOpen;rendRes();if(metricsOpen)scrollSectionIntoView('metrics-wrap')}
+function scrollSectionIntoView(id){
+  requestAnimationFrame(()=>{
+    const el=document.getElementById(id);
+    const shell=document.querySelector('.sticky-shell');
+    const shellH=shell?shell.getBoundingClientRect().height:0;
+    const top=el.getBoundingClientRect().top+window.pageYOffset-shellH-10;
+    window.scrollTo({top,behavior:'smooth'});
+  });
+}
 function kpiCard(key,label,value,valueColor,deltaHtml,iconSvg,detailHtml){
   const open=expandedKpi===key;
   return`<div class="kpi${open?' open':''}">
