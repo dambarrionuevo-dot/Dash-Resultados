@@ -73,6 +73,7 @@ body{font-family:'Heebo',-apple-system,BlinkMacSystemFont,'SF Pro Display','Sego
 .alert{border-radius:12px;padding:10px;margin-bottom:8px;background:var(--danger-bg)}
 .alert.n{background:#FFF3E0}:root[data-theme="dark"] .alert.n{background:rgba(255,167,51,.16)}@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .alert.n{background:rgba(255,167,51,.16)}}
 .alert.v{background:var(--success-bg)}
+.alert.i{background:var(--info-bg)}
 
 .alert strong{font-size:.8rem;display:block;margin-bottom:2px;color:var(--text-primary)}
 .alert p{font-size:.75rem;color:var(--text-secondary);line-height:1.4}
@@ -872,15 +873,43 @@ function rendRes(){
   const pbarsHtml=[['Cobertura de costos',fp(cc.cob),cc.cob],['Sostenibilidad (excl. Tech)',fp(cc.sos),cc.sos],['Personal s/ total costos',fp(cc.perPct),cc.perPct]].map(([l,v,p])=>`<div class="pb"><div class="pb-l"><span style="color:var(--st)">${l}</span><strong>${v}</strong></div><div class="pb-t"><div class="pb-f" style="width:${Math.min(100,Math.max(0,p))}%"></div></div></div>`).join('');
   document.getElementById('metrics-wrap').innerHTML=`<div class="ctrig${metricsOpen?' open':''}" onclick="toggleMetrics()" style="margin-bottom:${metricsOpen?'8':'0'}px"><span style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--az)">Métricas clave</span><span class="carr">▼</span></div><div class="coll${metricsOpen?' open':''}">${pbarsHtml}</div>`;
   const as=[];
-  as.push(cc.cob<50?{t:'r',ti:`🔴 Cobertura crítica: ${fp(cc.cob)}`,b:`Déficit: ${fm(cc.def)}.${cpx?` Cambio: ${(cc.cob-cpx.cob)>0?'+':''}${(cc.cob-cpx.cob).toFixed(1)} pp vs ${prvx.label}.`:''}`}:cc.cob<80?{t:'n',ti:`⚠️ Cobertura moderada: ${fp(cc.cob)}`,b:`Déficit: ${fm(cc.def)}. Meta: superar el 80%.`}:{t:'v',ti:`✅ Cobertura saludable: ${fp(cc.cob)}`,b:`Los ingresos cubren más del 80% de los costos.`});
-  if(cpx){
-    const di=(cc.tI-cpx.tI)/cpx.tI*100;
-    if(di>15)as.push({t:'v',ti:`✅ Ingresos: +${di.toFixed(1)}%`,b:`Subieron de ${fm(cpx.tI)} a ${fm(cc.tI)} vs ${prvx.label}.`});
-    else if(di<-10)as.push({t:'r',ti:`🔴 Ingresos cayeron ${Math.abs(di).toFixed(1)}%`,b:`Bajaron de ${fm(cpx.tI)} a ${fm(cc.tI)} vs ${prvx.label}.`});
-    if(cur.gas.d>0&&prvx.gas.d>0){const da=(cur.gas.d-prvx.gas.d)/prvx.gas.d*100;if(da>25)as.push({t:'n',ti:`⚠️ Desarrollo Apps: +${da.toFixed(1)}%`,b:`Escaló de ${fm(prvx.gas.d)} a ${fm(cur.gas.d)}.`})}
-    const dg=(cc.tG-cpx.tG)/cpx.tG*100;if(dg>25)as.push({t:'n',ti:`⚠️ Costos totales: +${dg.toFixed(1)}%`,b:`Subieron ${fm(cc.tG-cpx.tG)} vs ${prvx.label}.`});
+  if(cc.tG>0){
+    let top={l:'',v:0,rl:''};
+    RUBROS.forEach(r=>r.sub.forEach(s=>{const v=s.fn(cur.gas);if(v>top.v)top={l:s.l,v,rl:r.l}}));
+    if(top.v>0){
+      const pct=top.v/cc.tG*100;
+      as.push({t:'i',ti:`🔎 Mayor concentración: ${top.l}`,b:`Es la cuenta individual más alta del mes, ${fp(pct)} del total de costos (${fm(top.v)}), dentro de ${top.rl}.`});
+    }
   }
-  as.push(cc.sos>=80?{t:'v',ti:`✅ Sostenibilidad: ${fp(cc.sos)}`,b:`Cubre el ${fp(cc.sos)} excl. tecnología.`}:cc.sos>=50?{t:'n',ti:`⚠️ Sostenibilidad moderada: ${fp(cc.sos)}`,b:`Base ajustada (excl. Tech): ${fm(cc.tGaj)}.`}:{t:'r',ti:`🔴 Sostenibilidad crítica: ${fp(cc.sos)}`,b:`Aun excluyendo Tecnología, los ingresos no cubren los costos.`});
+  if(!cur.isCons){
+    const sorted=[...months].sort((a,b)=>a.id.localeCompare(b.id));
+    const curIdx=sorted.findIndex(m=>m.id===cur.id);
+    if(curIdx>=0){
+      const curOk=cc.cob>=80;
+      let streak=1;
+      for(let i=curIdx-1;i>=0;i--){if((calc(sorted[i]).cob>=80)===curOk)streak++;else break}
+      if(streak>=2)as.push(curOk?{t:'v',ti:`📈 Racha positiva: ${streak} meses`,b:`Lleva ${streak} meses consecutivos con cobertura ≥80%.`}:{t:'r',ti:`📉 Racha negativa: ${streak} meses`,b:`Lleva ${streak} meses consecutivos con cobertura por debajo del 80%.`});
+    }
+  }
+  if(cpx){
+    let mover=null;
+    RUBROS.forEach(r=>r.sub.forEach(s=>{
+      const cv=s.fn(cur.gas),pv=s.fn(prvx.gas);
+      if(pv>0){const d=cv-pv;if(!mover||Math.abs(d)>Math.abs(mover.d))mover={l:s.l,rl:r.l,d,dp:d/pv*100,cv,pv}}
+    }));
+    if(mover&&Math.abs(mover.dp)>20&&Math.abs(mover.d)>50000){
+      as.push({t:mover.d>0?'n':'v',ti:`${mover.d>0?'⬆️':'⬇️'} ${mover.l}: ${mover.d>0?'+':''}${mover.dp.toFixed(1)}%`,b:`Cuenta con la mayor variación dentro de ${mover.rl}: de ${fm(mover.pv)} a ${fm(mover.cv)}.`});
+    }
+  }
+  if(!cur.isCons){
+    const ej=getEj(cur.id);
+    const ejMonths=months.filter(m=>getEj(m.id).key===ej.key&&m.id<=cur.id);
+    if(ejMonths.length>1){
+      const tot=ejMonths.reduce((a,m)=>{const c=calc(m);a.tI+=c.tI;a.tG+=c.tG;return a},{tI:0,tG:0});
+      const def=tot.tG-tot.tI,cob=tot.tI/tot.tG*100;
+      as.push({t:def<0?'v':'r',ti:`📊 Acumulado del ejercicio: ${def<0?'Superávit':'Déficit'} ${fm(Math.abs(def))}`,b:`Cobertura promedio de los ${ejMonths.length} meses del ejercicio ${ej.label.replace('Ejercicio ','')}: ${fp(cob)}.`});
+    }
+  }
   document.getElementById('alertas-wrap').innerHTML=`<div class="ctrig${alertsOpen?' open':''}" onclick="toggleAlerts()" style="margin-bottom:${alertsOpen?'8':'0'}px"><span style="display:flex;align-items:center;gap:8px;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--az)">Insights<span class="badge" style="background:var(--info-bg);color:var(--az)">${as.length}</span></span><span class="carr">▼</span></div><div class="coll${alertsOpen?' open':''}">${as.map(a=>`<div class="alert ${a.t}"><strong>${a.ti}</strong><p>${a.b}</p></div>`).join('')}</div>`;
 }
 
